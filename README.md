@@ -1,1 +1,0 @@
-# MegaMind_LG01_G04_SE_Lab_Lab_Exercise_4.1
