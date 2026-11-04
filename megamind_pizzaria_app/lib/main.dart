@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'contact_page.dart';
 import 'facebook_page.dart';
+import 'twitter_page.dart'; // Import the Twitter page
 import 'about_page.dart';
 import 'menu_page.dart';
 
@@ -25,19 +26,9 @@ class MegaMindPizzaApp extends StatelessWidget {
         '/menu': (context) => const MenuPage(),
         '/about': (context) => const AboutPage(),
         '/contact': (context) => const ContactPage(),
-        '/twitter': (context) => const _Placeholder('Twitter/X'),
+        '/twitter': (context) => const TwitterPage(), // Updated to real TwitterPage
         '/facebook': (context) => const FacebookPage(),
       },
     );
   }
-}
-
-// Temporary stand-in; replace with teammates' pages after merging.
-class _Placeholder extends StatelessWidget {
-  const _Placeholder(this.title);
-  final String title;
-
-  @override
-  Widget build(BuildContext context) =>
-      Scaffold(appBar: AppBar(title: Text(title)), body: Center(child: Text(title)));
 }
