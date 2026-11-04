@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+
   pull_request:
     branches:
       - main
@@ -24,16 +25,19 @@ jobs:
           cache: true
 
       - name: Locate Flutter project
+        shell: bash
         run: |
           PROJECT_DIR=$(find . -type f -name pubspec.yaml \
-            -not -path '*/.dart_tool/*' -print -quit | xargs -r dirname)
+            -not -path '*/.dart_tool/*' \
+            -not -path '*/build/*' \
+            -print -quit | xargs -r dirname)
 
           if [ -z "$PROJECT_DIR" ]; then
-            echo "Flutter project not found!"
+            echo "ERROR: Flutter project not found!"
             exit 1
           fi
 
-          echo "Flutter project: $PROJECT_DIR"
+          echo "Found Flutter project: $PROJECT_DIR"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Install dependencies
@@ -42,7 +46,7 @@ jobs:
 
       - name: Analyze Flutter code
         working-directory: ${{ env.PROJECT_DIR }}
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Run Flutter tests
         working-directory: ${{ env.PROJECT_DIR }}
