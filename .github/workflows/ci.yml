@@ -1,5 +1,16 @@
+name: Flutter CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
   build:
+    name: Build and Test Flutter App
     runs-on: ubuntu-latest
 
     defaults:
@@ -7,17 +18,23 @@ jobs:
         working-directory: "./megamind pizza app"
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
+
+      - name: Check Flutter version
+        run: flutter --version
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze project
+      - name: Analyze Flutter code
         run: flutter analyze
 
-      - name: Run tests
+      - name: Run Flutter tests
         run: flutter test
