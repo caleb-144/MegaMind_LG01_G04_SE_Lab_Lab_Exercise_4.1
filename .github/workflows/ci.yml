@@ -13,10 +13,6 @@ jobs:
     name: Build and Test Flutter App
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: "./megamind pizza app"
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,14 +23,27 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Check Flutter version
-        run: flutter --version
+      - name: Locate Flutter project
+        run: |
+          PROJECT_DIR=$(find . -type f -name pubspec.yaml \
+            -not -path '*/.dart_tool/*' -print -quit | xargs -r dirname)
+
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "Error: pubspec.yaml not found!"
+            exit 1
+          fi
+
+          echo "Flutter project found at: $PROJECT_DIR"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Install dependencies
+        working-directory: ${{ env.PROJECT_DIR }}
         run: flutter pub get
 
       - name: Analyze Flutter code
+        working-directory: ${{ env.PROJECT_DIR }}
         run: flutter analyze
 
       - name: Run Flutter tests
+        working-directory: ${{ env.PROJECT_DIR }}
         run: flutter test
