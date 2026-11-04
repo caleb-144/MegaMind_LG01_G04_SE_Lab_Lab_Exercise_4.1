@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
+import 'contact_page.dart';
 
 void main() => runApp(const MegaMindPizzaApp());
 
@@ -20,7 +21,7 @@ class MegaMindPizzaApp extends StatelessWidget {
         '/': (context) => const HomePage(),
         '/menu': (context) => const _Placeholder('Menu'),
         '/about': (context) => const _Placeholder('About'),
-        '/contact': (context) => const _Placeholder('Contact'),
+        '/contact': (context) => const ContactPage(),
         '/twitter': (context) => const _Placeholder('Twitter/X'),
         '/facebook': (context) => const _Placeholder('Facebook'),
       },
