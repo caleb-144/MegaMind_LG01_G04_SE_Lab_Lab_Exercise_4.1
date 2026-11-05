@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/main.dart';
+import 'package:megamind_pizzaria_app/main.dart';
 
 void main() {
   testWidgets('MegaMind Pizza App smoke test', (WidgetTester tester) async {
