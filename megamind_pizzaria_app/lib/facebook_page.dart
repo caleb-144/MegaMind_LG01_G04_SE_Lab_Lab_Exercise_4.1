@@ -1,8 +1,6 @@
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 class FacebookPage extends StatefulWidget {
   const FacebookPage({super.key});
@@ -12,110 +10,220 @@ class FacebookPage extends StatefulWidget {
 }
 
 class _FacebookPageState extends State<FacebookPage> {
-  WebViewController? _controller;
-  int _loadingProgress = 0;
+  bool _isLoading = false;
+  Map<String, dynamic>? _userData;
 
-  final Uri _facebookUrl = Uri.parse('https://www.facebook.com/');
+  Future<void> _loginWithFacebook() async {
+    setState(() {
+      _isLoading = true;
+    });
 
-  @override
-  void initState() {
-    super.initState();
+    try {
+      final LoginResult result =
+          await FacebookAuth.instance.login(
+        permissions: ['email', 'public_profile'],
+      );
 
-    // Only initialize WebView on Android/iOS.
-    if (!kIsWeb) {
-      _controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onProgress: (progress) {
-              if (mounted) {
-                setState(() {
-                  _loadingProgress = progress;
-                });
-              }
-            },
+      if (!mounted) return;
+
+      if (result.status == LoginStatus.success) {
+        final userData =
+            await FacebookAuth.instance.getUserData(
+          fields: 'name,email,picture.width(200)',
+        );
+
+        if (!mounted) return;
+
+        setState(() {
+          _userData = userData;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Facebook login successful!'),
+            backgroundColor: Colors.green,
           ),
-        )
-        ..loadRequest(_facebookUrl);
-    }
-  }
-
-  Future<void> _openFacebook() async {
-    if (!await launchUrl(
-      _facebookUrl,
-      mode: LaunchMode.platformDefault,
-    )) {
+        );
+      } else if (result.status == LoginStatus.cancelled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Facebook login cancelled.'),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result.message ?? 'Facebook login failed.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not open Facebook.'),
+        SnackBar(
+          content: Text('Login error: $e'),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  Future<void> _logout() async {
+    await FacebookAuth.instance.logOut();
+
+    if (!mounted) return;
+
+    setState(() {
+      _userData = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoggedIn = _userData != null;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Facebook'),
         backgroundColor: const Color(0xFF1877F2),
         foregroundColor: Colors.white,
-        actions: [
-          if (!kIsWeb)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () => _controller?.reload(),
-            ),
-        ],
       ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: isLoggedIn
+              ? _buildProfile()
+              : _buildLogin(),
+        ),
+      ),
+    );
+  }
 
-      body: kIsWeb
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.facebook,
-                    size: 80,
-                    color: Color(0xFF1877F2),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Connect with us on Facebook!',
+  Widget _buildLogin() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(
+          Icons.facebook,
+          size: 90,
+          color: Color(0xFF1877F2),
+        ),
+        const SizedBox(height: 24),
+
+        const Text(
+          'Welcome to Facebook',
+          style: TextStyle(
+            fontSize: 23,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        const Text(
+          'Sign in with your Facebook account '
+          'to continue.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 15),
+        ),
+
+        const SizedBox(height: 30),
+
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton.icon(
+            onPressed:
+                _isLoading ? null : _loginWithFacebook,
+            icon: const Icon(Icons.facebook),
+            label: _isLoading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Continue with Facebook',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    onPressed: _openFacebook,
-                    icon: const Icon(Icons.open_in_new),
-                    label: const Text('Visit Facebook'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1877F2),
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ],
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1877F2),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
-            )
-          : Column(
-              children: [
-                if (_loadingProgress < 100)
-                  LinearProgressIndicator(
-                    value: _loadingProgress / 100,
-                    color: const Color(0xFF1877F2),
-                  ),
-                Expanded(
-                  child: WebViewWidget(
-                    controller: _controller!,
-                  ),
-                ),
-              ],
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfile() {
+    final name = _userData?['name'] ?? 'Facebook User';
+    final email = _userData?['email'] ?? 'Email unavailable';
+
+    final picture = _userData?['picture']
+        ?['data']?['url'];
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (picture != null)
+          CircleAvatar(
+            radius: 50,
+            backgroundImage: NetworkImage(picture),
+          )
+        else
+          const CircleAvatar(
+            radius: 50,
+            child: Icon(Icons.person, size: 50),
+          ),
+
+        const SizedBox(height: 20),
+
+        Text(
+          'Welcome, $name!',
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+
+        const SizedBox(height: 10),
+
+        Text(email),
+
+        const SizedBox(height: 30),
+
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton(
+            onPressed: _logout,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Logout'),
+          ),
+        ),
+      ],
     );
   }
 }
