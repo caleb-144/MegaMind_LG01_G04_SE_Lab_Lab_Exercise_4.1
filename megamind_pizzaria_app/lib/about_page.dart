@@ -158,7 +158,7 @@ class AboutPage extends StatelessWidget {
         color: cardColor,
         borderRadius: BorderRadius.circular(19),
         border: Border.all(
-          Colors.black.withValues(alpha: 0.5)
+          color: Colors.black.withValues(alpha: 0.5),
         ),
       ),
       child: Column(
