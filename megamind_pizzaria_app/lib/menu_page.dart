@@ -130,7 +130,7 @@ class MenuPage extends StatelessWidget {
                   color: cardColor,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    Colors.black.withValues(alpha: 0.5),
+                    Colors.black.withValues(alpha: 0.5)
                   ),
                 ),
                 child: Column(
